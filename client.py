@@ -57,3 +57,12 @@ class CodeBaseAPI(Auth):
 
 	def categories(self):
 		return self._get('/%s/tickets/categories' % self.project)
+
+	def milestones(self):
+		return self._get('/%s/tickets/milestones' % self.project)
+
+	def search(self, term):
+		return self._get('/%s/tickets?query=%s' % (self.project, term))
+
+	def watchers(self, ticket_id):
+		return self._get('/%s/tickets/%s/watchers' % (self.project, ticket_id))
