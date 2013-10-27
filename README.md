@@ -1,4 +1,4 @@
 codebase-python-api
 ===================
 
-Unofficial CodeBase Python API
+Unofficial CodeBase Python API client
