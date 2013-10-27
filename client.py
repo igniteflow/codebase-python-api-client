@@ -84,10 +84,10 @@ class CodeBaseAPI(Auth):
     def create_post_in_discussion(self, discussion_permalink, data):
         return self._post('/%s/discussions/%s/posts' % (self.project, discussion_permalink), data)
 
-    def all_notes(self, ticket_id):
+    def notes(self, ticket_id):
         return self._get('/%s/tickets/%s/notes' % (self.project, ticket_id))
 
-    def get_note(self, ticket_id, note_id):
+    def note(self, ticket_id, note_id):
         return self._get('/%s/tickets/%s/notes/%s' % (self.project, ticket_id, note_id))
 
     def add_note(self, ticket_id, data):

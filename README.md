@@ -1,7 +1,17 @@
 Codebase API Python Client
 ==========================
 
-An Unofficial CodeBase Python API client.  There a simple command-line interface to explore the API.  For example, to view all catagories and see the response in the terminal just enter:
+An unofficial CodeBase Python API client.  Example usage:
+
+	codebase = CodeBaseAPI(username=CODEBASE_USERNAME, apikey=CODEBASE_APIKEY, project=project)
+	notes = codebase.notes(ticket_id=1)
+
+Data is provided and returned as a Python dictionaries.
+
+CLI
+---
+
+There a simple command-line interface to explore the API.  For example, to view all catagories and see the response in the terminal just enter:
 
 	./cli.py [project] categories
 
