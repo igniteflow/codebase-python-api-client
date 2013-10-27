@@ -3,7 +3,7 @@ import json
 import requests
 
 
-class CodeBaseAPI(object):
+class Auth(object):
 
 	API_ENDPOINT = 'http://api3.codebasehq.com'
 
@@ -26,6 +26,9 @@ class CodeBaseAPI(object):
 	def _post(self, url, data):
 		response = requests.post(self.API_ENDPOINT + url, data=json.dumps(data), headers=self.HEADERS)
 		return json.loads(response.content)
+
+
+class CodeBaseAPI(Auth):
 
 	def all_notes(self, ticket_id):
 		return self._get('/%s/tickets/%s/notes' % (self.project, ticket_id))
