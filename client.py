@@ -90,7 +90,7 @@ class CodeBaseAPI(Auth):
 	def get_note(self, ticket_id, note_id):
 		return self._get('/%s/tickets/%s/notes/%s' % (self.project, ticket_id, note_id))
 
-	def create_note(self, ticket_id, data):
+	def add_note(self, ticket_id, data):
 		"""
 		data = {
         	'ticket_note': {
@@ -103,4 +103,12 @@ class CodeBaseAPI(Auth):
         """
 		return self._post('/%s/tickets/%s/notes' % (self.project, ticket_id), data)
 
+	def branches(self, repository):
+		return self._get('/%s/%s/branches' % (self.project, repository))
+
+	def hooks(self, repository):
+		return self._get('/%s/%s/hooks' % (self.project, repository))
+
+	def add_hook(self, repository, data):
+		return self._get('/%s/%s/hooks' % (self.project, repository), data)
 
