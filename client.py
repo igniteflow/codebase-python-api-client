@@ -8,7 +8,7 @@ class Auth(object):
 	API_ENDPOINT = 'http://api3.codebasehq.com'
 
 	def __init__(self, username, apikey, project, **kwargs):
-	    super(CodeBaseAPI, self).__init__(**kwargs)
+	    super(Auth, self).__init__(**kwargs)
 	    self.username = username
 	    self.apikey = apikey
 	    self.project = project
