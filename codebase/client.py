@@ -7,7 +7,7 @@ class Auth(object):
 
     API_ENDPOINT = 'http://api3.codebasehq.com'
 
-    def __init__(self, username, apikey, project, **kwargs):
+    def __init__(self, username, apikey, project, debug=False, **kwargs):
         super(Auth, self).__init__(**kwargs)
         self.username = username
         self.apikey = apikey
@@ -18,14 +18,15 @@ class Auth(object):
             "Authorization": base64.encodestring("%s:%s" % (self.username, self.apikey))\
                 .replace('\n', '')
         }
+        self.DEBUG = debug
     
     def _get(self, url): 
         response = requests.get(self.API_ENDPOINT + url, headers=self.HEADERS)
-        return json.loads(response.content)
+        return response if self.DEBUG else json.loads(response.content) 
 
     def _post(self, url, data):
         response = requests.post(self.API_ENDPOINT + url, data=json.dumps(data), headers=self.HEADERS)
-        return json.loads(response.content)
+        return response if self.DEBUG else json.loads(response.content)
 
 
 class CodeBaseAPI(Auth):

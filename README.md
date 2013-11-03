@@ -1,12 +1,24 @@
 Codebase API Python Client
 ==========================
 
-An unofficial CodeBase Python API client.  Example usage:
+A Python client providing read/write access to [Codebase API](http://support.codebasehq.com/kb).  Example usage:
 
 	codebase = CodeBaseAPI(username=CODEBASE_USERNAME, apikey=CODEBASE_APIKEY, project=project)
-	notes = codebase.notes(ticket_id=1)
 
-Data is provided and returned as a Python dictionaries.
+	# get all notes for a ticket
+	notes = codebase.notes(ticket_id=1) # notes returned as a Python dict
+
+	# update the status of a ticket (see http://support.codebasehq.com/kb/tickets-and-milestones/updating-tickets)
+	note_data = {
+        'ticket_note': {
+            u'content': u'This is the note comment',
+            u'changes': {
+                u'status_id': u'1631923', 
+            },
+        },
+    }
+    codebase.add_note(ticket_id=1, data=note_data)
+
 
 CLI
 ---
@@ -24,4 +36,4 @@ The CLI can call any function in the CodeBaseAPI class using the syntax:
 	./cli.py [project] [function name] *[args]
 
 
-[API Documentation](http://support.codebasehq.com/kb)
+

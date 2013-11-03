@@ -17,6 +17,11 @@ project = sys.argv[1]
 command = sys.argv[2]
 args = sys.argv[3:]
 
-codebase = CodeBaseAPI(username=CODEBASE_USERNAME, apikey=CODEBASE_APIKEY, project=project)
+codebase = CodeBaseAPI(
+	username=CODEBASE_USERNAME,
+	apikey=CODEBASE_APIKEY,
+	project=project,
+	debug=True
+)
 response = getattr(codebase, command)(*args)
 import pprint ; pprint.pprint(response)
