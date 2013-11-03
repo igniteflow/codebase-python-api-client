@@ -13,7 +13,7 @@ Use
 
     from codebase.client import CodeBaseAPI
     
-    codebase = CodeBaseAPI(username='walter-white', apikey='84gf6479gf674gf', project=project)
+    codebase = CodeBaseAPI(username='walter-white', apikey='84gf6479gf674gf', project='MyProject')
 
 	# get all notes for a ticket
 	notes = codebase.notes(ticket_id=1) # notes returned as a Python dict
@@ -31,6 +31,8 @@ Use
     
 Debugging
 ---------
+
+By default, data is given and returned as Python dicts.  To get the raw Requests Response object, just set CodeBaseAPI.DEBUG to True.
 
 CLI
 ---
