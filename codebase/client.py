@@ -2,27 +2,31 @@ import base64
 import json
 import requests
 
+from codebase.settings import Settings
+
 
 class Auth(object):
 
     API_ENDPOINT = 'http://api3.codebasehq.com'
+    DEBUG = False
 
-    def __init__(self, username, apikey, project, debug=False, **kwargs):
+    def __init__(self, project, **kwargs):
         super(Auth, self).__init__(**kwargs)
-        self.username = username
-        self.apikey = apikey
+        settings = Settings()
+        self.username = settings.CODEBASE_USERNAME
+        self.apikey = settings.CODEBASE_APIKEY
         self.project = project
+
         self.HEADERS = {
             "Content-type": "application/json",
             "Accept": "application/json",
             "Authorization": base64.encodestring("%s:%s" % (self.username, self.apikey))\
                 .replace('\n', '')
         }
-        self.DEBUG = debug
-    
-    def _get(self, url): 
+
+    def _get(self, url):
         response = requests.get(self.API_ENDPOINT + url, headers=self.HEADERS)
-        return response if self.DEBUG else json.loads(response.content) 
+        return response if self.DEBUG else json.loads(response.content)
 
     def _post(self, url, data):
         response = requests.post(self.API_ENDPOINT + url, data=json.dumps(data), headers=self.HEADERS)
@@ -97,7 +101,7 @@ class CodeBaseAPI(Auth):
             'ticket_note': {
                 u'content': u'Another test',
                 u'changes': {
-                    u'status_id': u'1631923', 
+                    u'status_id': u'1631923',
                 },
             },
         }
