@@ -10,12 +10,22 @@ class Auth(object):
     API_ENDPOINT = 'http://api3.codebasehq.com'
     DEBUG = False
 
-    def __init__(self, project, **kwargs):
-        super(Auth, self).__init__(**kwargs)
+    def _default_settings(self):
         settings = Settings()
         self.username = settings.CODEBASE_USERNAME
         self.apikey = settings.CODEBASE_APIKEY
+
+    def __init__(self, project, username=None, apikey=None, debug=False, **kwargs):
+        super(Auth, self).__init__(**kwargs)
+
+        if username and apikey:
+            self.username = username
+            self.apikey = apikey
+        else:
+            self._default_settings()
+
         self.project = project
+        self.DEBUG = debug
 
         self.HEADERS = {
             "Content-type": "application/json",
