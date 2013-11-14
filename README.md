@@ -18,11 +18,11 @@ To use the command-line interface, create a file called .codebase in your home d
         "CODEBASE_APIKEY": "4ofh783o4hf78o4fh4o"
     }
 
-You can now explore the API.  To see the available methods, just type:
+You can now explore the API.  To see the available methods:
 
     codebase
 
-To view all categories for a project and see the response in the terminal just enter:
+To view all categories for a project and see the response in the terminal:
 
     codebase [project] categories
 
