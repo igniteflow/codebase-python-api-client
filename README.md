@@ -10,6 +10,7 @@ Install
 
 CLI
 ---
+* After pip install the `codebase` command is availably globally
 
 To use the command-line interface, create a file called .codebase in your home directory and add your Codebase username and apikey (found in your Codebase settings page) in the following JSON format:
 
