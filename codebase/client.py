@@ -1,6 +1,8 @@
 import base64
 import json
 import requests
+import sys
+import urllib2
 
 from codebase.settings import Settings
 
@@ -35,12 +37,26 @@ class Auth(object):
         }
 
     def _get(self, url):
-        response = requests.get(self.API_ENDPOINT + url, headers=self.HEADERS)
-        return response if self.DEBUG else json.loads(response.content)
+        print(self.get_absolute_url(url))
+        response = requests.get(self.get_absolute_url(url), headers=self.HEADERS)
+
+        if '--pretty' in sys.argv:
+            items = json.loads(response.content)
+            
+            for item in items:
+                msg = '{} | {}'.format(item['ticket']['ticket_id'], item['ticket']['summary'])
+                if msg:
+                    print(msg)
+        else:
+            return response if self.DEBUG else json.loads(response.content)
 
     def _post(self, url, data):
-        response = requests.post(self.API_ENDPOINT + url, data=json.dumps(data), headers=self.HEADERS)
+        print(self.API_ENDPOINT + url)
+        response = requests.post(self.get_absolute_url(url), data=json.dumps(data), headers=self.HEADERS)
         return response if self.DEBUG else json.loads(response.content)
+
+    def get_absolute_url(self, url):
+        return self.API_ENDPOINT + url
 
 
 class CodeBaseAPI(Auth):
@@ -58,7 +74,12 @@ class CodeBaseAPI(Auth):
         return self._get('/%s/tickets/milestones' % self.project)
 
     def search(self, term):
-        return self._get('/%s/tickets?query=%s' % (self.project, term))
+        terms = term.split(':')
+        if len(terms) == 0:
+            escaped_term = urllib2.quote(terms[0])
+        else:
+            escaped_term = '{}:"{}"'.format(terms[0], urllib2.quote(terms[1]))
+        return self._get('/%s/tickets?query=%s' % (self.project, escaped_term))
 
     def watchers(self, ticket_id):
         return self._get('/%s/tickets/%s/watchers' % (self.project, ticket_id))

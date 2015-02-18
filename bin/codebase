@@ -32,5 +32,5 @@ if __name__ == "__main__":
             project=project,
         )
 
-        response = getattr(codebase, command)(*args)
+        response = getattr(codebase, command)(*[arg for arg in args if '--' not in arg])
         pprint.pprint(response)
