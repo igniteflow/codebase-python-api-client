@@ -1,5 +1,8 @@
 import json
+
 from os.path import expanduser
+
+from codebase import logger
 
 
 EXAMPLE_FORMAT = """
@@ -11,6 +14,9 @@ EXAMPLE_FORMAT = """
 
 
 class Settings(object):
+    """
+    By default settings are expected to be in a file named `.codebase` in your home directory
+    """
     SETTINGS_FILE_PATH = expanduser("~") + '/.codebase'
 
     def get_path(self):
@@ -23,5 +29,7 @@ class Settings(object):
                 for k, v in json.loads(f.read()).iteritems():
                     setattr(self, k, v)
         except IOError:
-            print('Settings file "~/.codebase" not found.  Please add your settings in JSON format e.g. %s'
-                  % EXAMPLE_FORMAT)
+            logger.error(
+                'Settings file "~/.codebase" not found.  Please add your settings in JSON format e.g. %s'
+                % EXAMPLE_FORMAT
+            )

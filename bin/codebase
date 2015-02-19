@@ -30,7 +30,8 @@ if __name__ == "__main__":
 
         codebase = CodeBaseAPI(
             project=project,
+            debug=True
         )
 
-        response = getattr(codebase, command)(*[arg for arg in args if '--' not in arg])
+        response = getattr(codebase, command)(*args)
         pprint.pprint(response)
