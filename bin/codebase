@@ -30,6 +30,7 @@ if __name__ == "__main__":
 
         codebase = CodeBaseAPI(
             project=project,
+            debug=True
         )
 
         response = getattr(codebase, command)(*args)
