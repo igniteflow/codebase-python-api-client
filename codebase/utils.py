@@ -7,6 +7,20 @@ from codebase.client import CodeBaseAPI
 class CodeBaseAPIUtils(CodeBaseAPI):
 
     def bulk_update_ticket_statuses(self, current_status_name, target_status_name):
+        """
+        Example usage to set all "Approved for Dev" tp "Deployed to Dev":
+
+        STATUS_TRANSITIONS = {
+            'dev': ('Approved for Dev', 'Deployed to Dev'),
+            'uat': ('Approved for UAT', 'Deployed to UAT'),
+            'prod': ('Approved for Prod', 'Deployed to Prod'),
+        }
+
+        env = 'dev'
+        current_status_name = STATUS_TRANSITIONS[env][0]
+        target_status_name = STATUS_TRANSITIONS[env][1]
+        codebase_utils.bulk_update_ticket_statuses(current_status_name, target_status_name)
+        """
 
         # get the status ids because Codebase search doesn't support searching on status id
         new_status_id = None
@@ -36,7 +50,7 @@ class CodeBaseAPIUtils(CodeBaseAPI):
             self.add_note(ticket_id, data)
 
             # print output
-            sys.stdout.write('[{}] {} {} --> {}'.format(
+            sys.stdout.write('[{}] {} {} --> {}\n'.format(
                 ticket_id,
                 item['ticket']['summary'],
                 current_status_name,
