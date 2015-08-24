@@ -6,7 +6,7 @@ A Python client providing read/write access to the [Codebase API](http://support
 Install
 -------
 
-    pip install -U git+git://github.com/igniteflow/codebase-python-api-client
+    pip install git+git://github.com/igniteflow/codebase-python-api-client
 
 CLI
 ---
@@ -56,10 +56,3 @@ Use the client in your code
         },
     }
     codebase.add_note(ticket_id=1, data=note_data)
-
-Debugging
----------
-
-By default, data is given and returned as Python dicts.  To get the raw requests.Response object, just set CodeBaseAPI.DEBUG to True.
-
-

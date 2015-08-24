@@ -5,7 +5,6 @@ import urllib
 import urllib2
 
 from codebase import logger
-from codebase.settings import Settings
 
 
 class Auth(object):
@@ -13,11 +12,13 @@ class Auth(object):
     API_ENDPOINT = 'https://api3.codebasehq.com'
 
     def _default_settings(self):
+        # prevent import error on AppEngine
+        from codebase.settings import Settings
         settings = Settings()
         self.username = settings.CODEBASE_USERNAME
         self.apikey = settings.CODEBASE_APIKEY
 
-    def __init__(self, project, username=None, apikey=None, **kwargs):
+    def __init__(self, project=None, username=None, apikey=None, **kwargs):
         super(Auth, self).__init__(**kwargs)
 
         if username and apikey:
