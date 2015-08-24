@@ -1,23 +1,24 @@
 import base64
 import json
 import logging
-import requests
+import urllib
 import urllib2
 
 from codebase import logger
-from codebase.settings import Settings
 
 
 class Auth(object):
 
-    API_ENDPOINT = 'http://api3.codebasehq.com'
+    API_ENDPOINT = 'https://api3.codebasehq.com'
 
     def _default_settings(self):
+        # prevent import error on AppEngine
+        from codebase.settings import Settings
         settings = Settings()
         self.username = settings.CODEBASE_USERNAME
         self.apikey = settings.CODEBASE_APIKEY
 
-    def __init__(self, project, username=None, apikey=None, debug=False, **kwargs):
+    def __init__(self, project=None, username=None, apikey=None, **kwargs):
         super(Auth, self).__init__(**kwargs)
 
         if username and apikey:
@@ -27,41 +28,52 @@ class Auth(object):
             self._default_settings()
 
         self.project = project
-        self.DEBUG = debug
 
-        self.HEADERS = {
+    def get_headers(self):
+        return {
             "Content-type": "application/json",
             "Accept": "application/json",
-            "Authorization": base64.encodestring("%s:%s" % (self.username, self.apikey))\
-                .replace('\n', '')
+            "Authorization": base64.encodestring("%s:%s" % (
+                self.username, self.apikey)
+            ).replace('\n', '')
         }
 
-        if debug:
-            logging.basicConfig(
-                level=logging.DEBUG,
-                format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
-                datefmt='%m-%d %H:%M',
-            )
+    def get_absolute_url(self, path):
+        return self.API_ENDPOINT + path
 
     def get(self, url):
-        response = requests.get(self.get_absolute_url(url), headers=self.HEADERS)
+        absolute_url = self.get_absolute_url(url)
+        headers = self.get_headers()
+        request = urllib2.Request(
+            url=absolute_url,
+            headers=headers,
+        )
+        response = urllib2.urlopen(request)
         return self.handle_response(response)
 
-    def post(self, url, data):
-        response = requests.post(self.get_absolute_url(url), data=json.dumps(data), headers=self.HEADERS)
+    def post(self, url, values):
+        absolute_url = self.get_absolute_url(url)
+        headers = self.get_headers()
+        data = urllib.urlencode(values)
+        request = urllib2.Request(
+            url=absolute_url,
+            headers=headers,
+            data=data,
+        )
+        response = urllib2.urlopen(request)
         return self.handle_response(response)
 
     def handle_response(self, response):
-        logger.debug('Response status code: {}'.format(response.status_code))
-        if response.ok:
-            return json.loads(response.content)
-        else:
-            return response.content
-
-    def get_absolute_url(self, path):
-        absolute_url = self.API_ENDPOINT + path
-        logger.debug(absolute_url)
-        return absolute_url
+        try:
+            status_code = response.getcode()
+            content = response.read()
+            logger.debug('{} returned status code {}'.format(
+                response.url,
+                status_code
+            ))
+            return json.loads(content)
+        except Exception as e:
+            logging.exception(e)
 
 
 class CodeBaseAPI(Auth):
@@ -152,4 +164,3 @@ class CodeBaseAPI(Auth):
 
     def add_hook(self, repository, data):
         return self.get('/%s/%s/hooks' % (self.project, repository), data)
-

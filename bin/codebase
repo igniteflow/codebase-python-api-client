@@ -24,13 +24,17 @@ if __name__ == "__main__":
                 print name
     else:
         # make the API call
+        # TODO use something more sensible like argparse
+        if not len(sys.argv) >= 3:
+            print('Usage:  codebase [project name] [api method]\n e.g. codebase myproject statuses')
+            exit(1)
+
         project = sys.argv[1]
         command = sys.argv[2]
         args = sys.argv[3:]
 
         codebase = CodeBaseAPI(
             project=project,
-            debug=True
         )
 
         response = getattr(codebase, command)(*args)
