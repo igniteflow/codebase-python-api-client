@@ -33,9 +33,9 @@ class Auth(object):
         return {
             "Content-type": "application/json",
             "Accept": "application/json",
-            "Authorization": base64.encodestring("%s:%s" % (
-                self.username, self.apikey)
-            ).replace('\n', '')
+            "Authorization": base64.b64encode(
+                '{}:{}'.format(self.username, self.apikey)
+            )
         }
 
     def get_absolute_url(self, path):
@@ -48,6 +48,10 @@ class Auth(object):
             url=absolute_url,
             headers=headers,
         )
+        logging.info('Making request to {} with headers {}'.format(
+            request.get_full_url(),
+            request.headers,
+        ))
         response = urllib2.urlopen(request)
         return self.handle_response(response)
 
@@ -78,6 +82,9 @@ class Auth(object):
 
 class CodeBaseAPI(Auth):
 
+    def projects(self):
+        return self.get('/projects')
+
     def statuses(self):
         return self.get('/%s/tickets/statuses' % self.project)
 
@@ -87,8 +94,11 @@ class CodeBaseAPI(Auth):
     def categories(self):
         return self.get('/%s/tickets/categories' % self.project)
 
+    def types(self):
+        return self.get('/%s/tickets/types' % self.project)
+
     def milestones(self):
-        return self.get('/%s/tickets/milestones' % self.project)
+        return self.get('/%s/milestones' % self.project)
 
     def search(self, term):
         terms = term.split(':')

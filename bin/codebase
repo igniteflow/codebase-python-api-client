@@ -29,6 +29,7 @@ if __name__ == "__main__":
             print('Usage:  codebase [project name] [api method]\n e.g. codebase myproject statuses')
             exit(1)
 
+        # TODO if only one arg given, then assume its a global command e.g. 'projects'
         project = sys.argv[1]
         command = sys.argv[2]
         args = sys.argv[3:]
