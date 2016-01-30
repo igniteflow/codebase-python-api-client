@@ -3,71 +3,57 @@ import json
 import logging
 import urllib
 import urllib2
+import urlparse
+
+import xmltodict
 
 from codebase import logger
+from codebase.settings import Settings
 
 
 class Auth(object):
-
+    CTYPE_JSON = 'json'
+    CTYPE_XML = 'xml'
     API_ENDPOINT = 'https://api3.codebasehq.com'
-
-    def _default_settings(self):
-        # prevent import error on AppEngine
-        from codebase.settings import Settings
-        settings = Settings()
-        self.username = settings.CODEBASE_USERNAME
-        self.apikey = settings.CODEBASE_APIKEY
 
     def __init__(self, project=None, username=None, apikey=None, **kwargs):
         super(Auth, self).__init__(**kwargs)
 
-        if username and apikey:
-            self.username = username
-            self.apikey = apikey
-        else:
-            self._default_settings()
+        if not (username or apikey):
+            settings = self._get_settings()
+            username = settings.username
+            apikey = settings.apikey
+
+        self.username = username
+        self.apikey = apikey
 
         self.project = project
 
-    def get_headers(self):
+    def _get_settings(self):
+        settings = Settings()
+        settings.import_settings()
+        return settings
+
+    def get_absolute_url(self, path):
+        return urlparse.urljoin(self.API_ENDPOINT, path)
+
+    def get_headers(self, ctype):
         return {
-            "Content-type": "application/json",
-            "Accept": "application/json",
-            "Authorization": base64.b64encode(
+            'Content-type': 'application/{}'.format(ctype),
+            'Accept': 'application/{}'.format(ctype),
+            'Authorization': base64.b64encode(
                 '{}:{}'.format(self.username, self.apikey)
             )
         }
 
-    def get_absolute_url(self, path):
-        return self.API_ENDPOINT + path
+    def get_data(self, raw_data, ctype):
+        if ctype == self.CTYPE_XML:
+            return xmltodict.unparse(raw_data)
 
-    def get(self, url):
-        absolute_url = self.get_absolute_url(url)
-        headers = self.get_headers()
-        request = urllib2.Request(
-            url=absolute_url,
-            headers=headers,
-        )
-        logging.info('Making request to {} with headers {}'.format(
-            request.get_full_url(),
-            request.headers,
-        ))
-        response = urllib2.urlopen(request)
-        return self.handle_response(response)
+        # Encodes the parameters by default (i.e. using json).
+        return urllib.urlencode(raw_data)
 
-    def post(self, url, values):
-        absolute_url = self.get_absolute_url(url)
-        headers = self.get_headers()
-        data = urllib.urlencode(values)
-        request = urllib2.Request(
-            url=absolute_url,
-            headers=headers,
-            data=data,
-        )
-        response = urllib2.urlopen(request)
-        return self.handle_response(response)
-
-    def handle_response(self, response):
+    def _handle_response(self, response, ctype):
         try:
             status_code = response.getcode()
             content = response.read()
@@ -75,9 +61,41 @@ class Auth(object):
                 response.url,
                 status_code
             ))
+
+            if ctype == self.CTYPE_XML:
+                return xmltodict.parse(content)
             return json.loads(content)
         except Exception as e:
-            logging.exception(e)
+            logging.exception('%s: %s', e.__class__.__name__, e.message)
+
+    def _send_request(self, url, ctype=None, data=None):
+        if not ctype:
+            ctype = self.CTYPE_JSON
+
+        absolute_url = self.get_absolute_url(url)
+        headers = self.get_headers(ctype)
+        req_params = {
+            'url': absolute_url,
+            'headers': headers,
+        }
+        if data:
+            data = self.get_data(data, ctype)
+            req_params['data'] = data
+
+        request = urllib2.Request(**req_params)
+        logging.info('Making request to {} with headers {}'.format(
+            request.get_full_url(),
+            request.headers,
+        ))
+
+        response = urllib2.urlopen(request)
+        return self._handle_response(response, ctype)
+
+    def get(self, url, ctype=None):
+        return self._send_request(url, ctype=ctype)
+
+    def post(self, url, data, ctype=None):
+        return self._send_request(url, data=data, ctype=ctype)
 
 
 class CodeBaseAPI(Auth):
@@ -138,6 +156,15 @@ class CodeBaseAPI(Auth):
     def discussion_categories(self):
         return self.get('/%s/discussions/categories' % self.project)
 
+    def create_ticket(self, data):
+        # It looks like that only XML requests are accepted for creating new
+        # tickets.
+        return self.post(
+            '/%s/tickets' % self.project,
+            data,
+            ctype=self.CTYPE_XML,
+        )
+
     def create_discussion(self, data):
         return self.post('/%s/discussions' % self.project, data)
 
@@ -173,4 +200,4 @@ class CodeBaseAPI(Auth):
         return self.get('/%s/%s/hooks' % (self.project, repository))
 
     def add_hook(self, repository, data):
-        return self.get('/%s/%s/hooks' % (self.project, repository), data)
+        return self.post('/%s/%s/hooks' % (self.project, repository), data)
