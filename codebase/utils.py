@@ -42,7 +42,7 @@ class CodeBaseAPIUtils(CodeBaseAPI):
             return False
 
         # update the tickets
-        items = self.search('status:{}'.format(current_status_name))
+        items = self.search_all(status=current_status_name)
         for item in items:
             ticket_id = item['ticket']['ticket_id']
             data = {

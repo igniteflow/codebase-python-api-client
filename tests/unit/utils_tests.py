@@ -1,5 +1,4 @@
 from unittest import TestCase
-import urllib2
 
 from mock import call, patch
 
@@ -8,6 +7,7 @@ from codebase.utils import CodeBaseAPIUtils
 
 @patch('codebase.client.CodeBaseAPI.post')
 @patch('codebase.client.CodeBaseAPI.get')
+@patch('codebase.client.CodeBaseAPI.search_all')
 class CodeBaseAPIUtilsTestCase(TestCase):
 
     def setUp(self):
@@ -34,20 +34,9 @@ class CodeBaseAPIUtilsTestCase(TestCase):
             {'ticket': {'ticket_id': 90, 'summary': 'ticket 90'}},
         ]
 
-    def test_bulk_update_ticket_statuses(self, get_mock, post_mock):
-        # The first call should be get to `self.statuses`;
-        # The second call should be get to `self.search`;
-        get_mock.side_effect = [
-            self.statuses,
-            self.tickets_found,
-        ]
-
-        # What to expect from the calling to the search API.
-        escaped_term = 'status:"{}"'.format(urllib2.quote('New'))
-        expected_search_url = '/{}/tickets?query={}'.format(
-            self.api_client.project,
-            escaped_term,
-        )
+    def test_bulk_update_ticket_statuses(self, search_all_mock, get_mock, post_mock):
+        search_all_mock.return_value = self.tickets_found
+        get_mock.return_value = self.statuses
 
         # Bulk update the 5 tickets from 'New' to 'Completed'.
         bulk_res = self.api_client.bulk_update_ticket_statuses('New', 'Completed')
@@ -55,10 +44,10 @@ class CodeBaseAPIUtilsTestCase(TestCase):
 
         # Makes sure the first call retrieves the statuses, while the second
         # one searches for the 5 tickets.
-        get_mock.assert_has_calls([
-            call('/{}/tickets/statuses'.format(self.api_client.project)),
-            call(expected_search_url),
-        ])
+        search_all_mock.assert_called_once_with(status='New')
+        get_mock.assert_called_once_with(
+            '/{}/tickets/statuses'.format(self.api_client.project)
+        )
         # Makes sure the 5 tickets are updated, setting the status to
         # 'Completed' (status id = 4).
         post_mock.assert_has_calls([
@@ -71,14 +60,10 @@ class CodeBaseAPIUtilsTestCase(TestCase):
 
     @patch('codebase.utils.logger')
     def test_bulk_update_ticket_statuses_no_status_found(
-        self, logger_mock, get_mock, post_mock
+        self, logger_mock, search_all_mock, get_mock, post_mock
     ):
-        # The first call should be get to `self.statuses`;
-        # The second call should be get to `self.search`;
-        get_mock.side_effect = [
-            self.statuses,
-            self.tickets_found,
-        ]
+        search_all_mock.return_value = self.tickets_found
+        get_mock.return_value = self.statuses
 
         # Trying to bulk update the 5 tickets, but using a non-existing status.
         bulk_res = self.api_client.bulk_update_ticket_statuses(
@@ -92,6 +77,7 @@ class CodeBaseAPIUtilsTestCase(TestCase):
         get_mock.assert_called_once_with(
             '/{}/tickets/statuses'.format(self.api_client.project)
         )
+        search_all_mock.assert_not_called()
         # No calling to the post because the status doesn't exist.
         post_mock.assert_not_called()
 

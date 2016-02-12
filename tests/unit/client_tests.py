@@ -5,7 +5,7 @@ import urllib
 import urllib2
 import urlparse
 
-from mock import Mock, patch
+from mock import Mock, call, patch
 import xmltodict
 
 from codebase.client import Auth, CodeBaseAPI
@@ -397,37 +397,6 @@ class CodeBaseAPITestCase(TestCase):
         get_mock.assert_called_once_with(expected_url)
         post_mock.assert_not_called()
 
-    def test_search_simple_term(self, get_mock, post_mock):
-        get_mock.assert_not_called()
-        post_mock.assert_not_called()
-
-        term = 'something interesting'
-        expected_url = '/{}/tickets?query={}'.format(
-            self.api_client.project,
-            urllib2.quote(term),
-        )
-
-        self.api_client.search(term)
-
-        get_mock.assert_called_once_with(expected_url)
-        post_mock.assert_not_called()
-
-    def test_search_complex_term(self, get_mock, post_mock):
-        get_mock.assert_not_called()
-        post_mock.assert_not_called()
-
-        term = 'something:more interesting'
-        escaped_term = 'something:"{}"'.format(urllib2.quote('more interesting'))
-        expected_url = '/{}/tickets?query={}'.format(
-            self.api_client.project,
-            escaped_term,
-        )
-
-        self.api_client.search(term)
-
-        get_mock.assert_called_once_with(expected_url)
-        post_mock.assert_not_called()
-
     def test_watchers(self, get_mock, post_mock):
         get_mock.assert_not_called()
         post_mock.assert_not_called()
@@ -642,3 +611,198 @@ class CodeBaseAPITestCase(TestCase):
 
         get_mock.assert_not_called()
         post_mock.assert_called_once_with(expected_url, data)
+
+
+@patch('codebase.client.CodeBaseAPI.post')
+@patch('codebase.client.CodeBaseAPI.get')
+class CodeBaseAPISearchTestCase(TestCase):
+
+    def setUp(self):
+        super(CodeBaseAPISearchTestCase, self).setUp()
+
+        self.api_client = CodeBaseAPI(
+            project='project',
+            username='some/body',
+            apikey='bees',
+        )
+
+    def test_search_no_terms(self, get_mock, post_mock):
+        get_mock.assert_not_called()
+        post_mock.assert_not_called()
+
+        expected_url = '/{}/tickets?query='.format(self.api_client.project)
+        self.api_client.search()
+
+        get_mock.assert_called_once_with(expected_url)
+        post_mock.assert_not_called()
+
+    def test_search_only_term(self, get_mock, post_mock):
+        get_mock.assert_not_called()
+        post_mock.assert_not_called()
+
+        term = 'something interesting'
+        expected_url = '/{}/tickets?query={}'.format(
+            self.api_client.project,
+            urllib.quote_plus(term),
+        )
+
+        self.api_client.search(term=term)
+
+        get_mock.assert_called_once_with(expected_url)
+        post_mock.assert_not_called()
+
+    def test_search_only_kwargs(self, get_mock, post_mock):
+        get_mock.assert_not_called()
+        post_mock.assert_not_called()
+
+        expected_url = '/{}/tickets?{}'.format(
+            self.api_client.project,
+            urllib.urlencode({'query': 'something:"more interesting"'}),
+        )
+
+        self.api_client.search(something='more interesting')
+
+        get_mock.assert_called_once_with(expected_url)
+        post_mock.assert_not_called()
+
+    def test_search_exclude(self, get_mock, post_mock):
+        get_mock.assert_not_called()
+        post_mock.assert_not_called()
+
+        expected_url = '/{}/tickets?{}'.format(
+            self.api_client.project,
+            urllib.urlencode({'query': 'not-something:"more interesting"'}),
+        )
+
+        self.api_client.search(not_something='more interesting')
+
+        get_mock.assert_called_once_with(expected_url)
+        post_mock.assert_not_called()
+
+    def test_search_with_page_number(self, get_mock, post_mock):
+        get_mock.assert_not_called()
+        post_mock.assert_not_called()
+
+        expected_url = '/{}/tickets?{}'.format(
+            self.api_client.project,
+            urllib.urlencode(
+                {'query': 'the term', 'page': 2}
+            ),
+        )
+
+        self.api_client.search(term='the term', page=2)
+
+        get_mock.assert_called_once_with(expected_url)
+        post_mock.assert_not_called()
+
+    def test_search_with_bad_page_number(self, get_mock, post_mock):
+        get_mock.assert_not_called()
+        post_mock.assert_not_called()
+
+        for page_number in (-1, 0, 1, 'a-string'):
+            expected_url = '/{}/tickets?{}'.format(
+                self.api_client.project,
+                urllib.urlencode({'query': 'the term'}),
+            )
+
+            self.api_client.search(term='the term', page=page_number)
+
+            get_mock.assert_called_with(expected_url)
+            post_mock.assert_not_called()
+
+    def test_search_with_everything(self, get_mock, post_mock):
+        get_mock.assert_not_called()
+        post_mock.assert_not_called()
+
+        expected_url = '/{}/tickets?{}'.format(
+            self.api_client.project,
+            urllib.urlencode({
+                'query': 'title something:"more interesting" not-status:"New"',
+                'page': 2,
+            }),
+        )
+
+        self.api_client.search(
+            term='title',
+            something='more interesting',
+            not_status='New',
+            page=2,
+        )
+
+        get_mock.assert_called_once_with(expected_url)
+        post_mock.assert_not_called()
+
+
+@patch('codebase.client.CodeBaseAPI.post')
+@patch('codebase.client.CodeBaseAPI.search')
+class CodeBaseAPISearchAllTestCase(TestCase):
+
+    def setUp(self):
+        super(CodeBaseAPISearchAllTestCase, self).setUp()
+
+        self.api_client = CodeBaseAPI(
+            project='project',
+            username='some/body',
+            apikey='bees',
+        )
+
+    def test_search_all_no_res(self, search_mock, post_mock):
+        search_mock.assert_not_called()
+        post_mock.assert_not_called()
+
+        search_mock.side_effect = urllib2.HTTPError
+
+        res = self.api_client.search_all(term='title', status='New')
+
+        self.assertEqual(res, [])
+
+        search_mock.assert_called_once_with(term='title', page=1, status='New')
+        post_mock.assert_not_called()
+
+    def test_search_all(self, search_mock, post_mock):
+        search_mock.assert_not_called()
+        post_mock.assert_not_called()
+
+        first_page_results = [Mock(pk=i) for i in range(3)]
+        second_page_results = [Mock(pk=i) for i in range(3, 5)]
+        search_mock.side_effect = [
+            first_page_results,
+            second_page_results,
+            urllib2.HTTPError(*[None] * 5),
+        ]
+
+        res = self.api_client.search_all(term='title', status='New')
+
+        self.assertEqual(res, first_page_results + second_page_results)
+
+        search_mock.assert_has_calls([
+            call(term='title', page=1, status='New'),
+            call(term='title', page=2, status='New'),
+            call(term='title', page=3, status='New'),  # this will throw a urllib2.HTTPError
+        ])
+        post_mock.assert_not_called()
+
+    @patch('codebase.client.logger')
+    def test_search_all_throws_unexpected_error(
+        self, logger_mock, search_mock, post_mock
+    ):
+        search_mock.assert_not_called()
+        post_mock.assert_not_called()
+
+        first_page_results = [Mock(pk=i) for i in range(3)]
+        error = ValueError()
+        search_mock.side_effect = [first_page_results, error]
+
+        res = self.api_client.search_all(term='title', status='New')
+
+        self.assertEqual(res, first_page_results)
+
+        logger_mock.error.assert_called_once_with(
+            u'An error occured while searching for "%s" '
+            u'(current page: %s):\n%s', 'title', 2, error
+        )
+        search_mock.assert_has_calls([
+            call(term='title', page=1, status='New'),
+            call(term='title', page=2, status='New'),  # this will throw a ValueError
+        ])
+        post_mock.assert_not_called()

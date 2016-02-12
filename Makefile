@@ -4,7 +4,7 @@ nosetests := nosetests \
 	--cover-erase \
 	--cover-package=codebase \
 	--cover-branches \
-	--cover-inclusive $(specs)
+	--cover-inclusive
 
 runtests-install:
 	@clear
@@ -14,9 +14,14 @@ runtests-install:
 	@find ./ -name "*.pyc" -delete >> /dev/null
 
 	@echo Running tests:
-	@$(nosetests)
+	@$(nosetests) $(specs)
 
 runtests:
 	@clear
 	@echo Running tests:
-	@$(nosetests)
+	@$(nosetests) --where=tests/unit $(specs)
+
+runtests-all:
+	@clear
+	@echo Running tests:
+	@$(nosetests) $(specs)

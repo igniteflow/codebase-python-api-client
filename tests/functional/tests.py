@@ -1,33 +1,25 @@
 from unittest import TestCase
 
-#from codebase.client import CodeBaseAPI
+from codebase.client import CodeBaseAPI
 
 
 class CodebaseAPITest(TestCase):
+    PROJECT = 'foo'
 
-#    PROJECT = 'foo'
-#
-#    def setUp(self):
-#        self.codebase = CodeBaseAPI(project=self.PROJECT)
+    def setUp(self):
+        self.codebase = CodeBaseAPI(project=self.PROJECT)
 
-    def tests_ok(self):
-        assert True
+    def test_statuses(self):
+        self.assertIsNotNone(self.codebase.statuses())
 
-#    def test_statuses(self):
-#        self.assertEqual(self.codebase.statuses().status_code, 200)
-#
-#    def test_priorities(self):
-#        self.assertEqual(self.codebase.priorities().status_code, 200)
-#
-#    def test_categories(self):
-#        self.assertEqual(self.codebase.categories().status_code, 200)
-#
-#    def test_milestones(self):
-#        self.assertEqual(self.codebase.milestones().status_code, 200)
-#
-#    def test_search(self):
-#        self.assertEqual(self.codebase.search('one').status_code, 200)
+    def test_priorities(self):
+        self.assertIsNotNone(self.codebase.priorities())
 
+    def test_categories(self):
+        self.assertIsNotNone(self.codebase.categories())
 
-#if __name__ == '__main__':
-#    unittest.main()
+    def test_milestones(self):
+        self.assertIsNotNone(self.codebase.milestones())
+
+    def test_search(self):
+        self.assertIsNotNone(self.codebase.search('one'))

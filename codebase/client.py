@@ -118,13 +118,42 @@ class CodeBaseAPI(Auth):
     def milestones(self):
         return self.get('/%s/milestones' % self.project)
 
-    def search(self, term):
-        terms = term.split(':')
-        if len(terms) == 1:
-            escaped_term = urllib2.quote(terms[0])
-        else:
-            escaped_term = '{}:"{}"'.format(terms[0], urllib2.quote(terms[1]))
-        return self.get('/%s/tickets?query=%s' % (self.project, escaped_term))
+    def search(self, term=None, page=None, **kwargs):
+        queries = []
+        if term:
+            queries.append(term.strip())
+
+        for term_name, term_value in kwargs.iteritems():
+            if term_name.startswith('not_'):
+                term_name = term_name.replace('not_', 'not-')
+            queries.append('{}:"{}"'.format(term_name, term_value.strip()))
+
+        params = {'query': ' '.join(queries)}
+        if page and page > 1 and type(page) is int:
+            params['page'] = page
+
+        url = '/{}/tickets?{}'.format(self.project, urllib.urlencode(params))
+        return self.get(url)
+
+    def search_all(self, term=None, **kwargs):
+        page = 1
+        tickets = []
+        while True:
+            try:
+                tickets.extend(self.search(term=term, page=page, **kwargs))
+                page += 1
+            except urllib2.HTTPError:
+                page -= 1
+                break
+            except Exception, e:
+                logger.error(
+                    u'An error occured while searching for "%s" '
+                    u'(current page: %s):\n%s', term, page, e
+                )
+                page -= 1
+                break
+
+        return tickets
 
     def watchers(self, ticket_id):
         return self.get('/%s/tickets/%s/watchers' % (self.project, ticket_id))
