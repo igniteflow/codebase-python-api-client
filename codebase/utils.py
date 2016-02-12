@@ -39,10 +39,11 @@ class CodeBaseAPIUtils(CodeBaseAPI):
                 u'Status "{}" not found in project statuses. '
                 u'Options are: {}'.format(target_status_name, status_names)
             )
-            return False
+            return
 
         # update the tickets
         items = self.search_all(status=current_status_name)
+        updated = []
         for item in items:
             ticket_id = item['ticket']['ticket_id']
             data = {
@@ -61,5 +62,6 @@ class CodeBaseAPIUtils(CodeBaseAPI):
                 current_status_name,
                 target_status_name
             ))
+            updated.append(ticket_id)
 
-        return True
+        return updated

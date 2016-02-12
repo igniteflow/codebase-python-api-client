@@ -40,7 +40,10 @@ class CodeBaseAPIUtilsTestCase(TestCase):
 
         # Bulk update the 5 tickets from 'New' to 'Completed'.
         bulk_res = self.api_client.bulk_update_ticket_statuses('New', 'Completed')
-        self.assertEqual(bulk_res, True)
+        self.assertEqual(
+            bulk_res,
+            [item['ticket']['ticket_id'] for item in self.tickets_found],
+        )
 
         # Makes sure the first call retrieves the statuses, while the second
         # one searches for the 5 tickets.
@@ -70,7 +73,7 @@ class CodeBaseAPIUtilsTestCase(TestCase):
             'New',
             'Not a valid status',
         )
-        self.assertEqual(bulk_res, False)
+        self.assertIsNone(bulk_res)
 
         # Makes sure the first call retrieves the statuses, and there will
         # not be more calls because the status doesn't exit.
