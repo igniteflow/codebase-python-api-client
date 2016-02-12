@@ -14,7 +14,7 @@ runtests-install:
 	@find ./ -name "*.pyc" -delete >> /dev/null
 
 	@echo Running tests:
-	@$(nosetests) $(specs)
+	@$(nosetests) --where=tests/unit $(specs)
 
 runtests:
 	@clear
