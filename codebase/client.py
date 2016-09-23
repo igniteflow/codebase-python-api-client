@@ -55,10 +55,9 @@ class Auth(object):
         response = urllib2.urlopen(request)
         return self.handle_response(response)
 
-    def post(self, url, values):
+    def post(self, url, data):
         absolute_url = self.get_absolute_url(url)
         headers = self.get_headers()
-        data = urllib.urlencode(values)
         request = urllib2.Request(
             url=absolute_url,
             headers=headers,
