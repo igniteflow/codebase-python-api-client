@@ -10,6 +10,9 @@ setup(
     author_email='philtysoe@gmail.com',
     url='https://github.com/igniteflow/codebase-python-api-client',
     packages=['codebase'],
+    install_requires=[
+        'xmltodict>=0.9.2',
+    ],
     license='MIT',
     scripts=[
         'bin/codebase'
