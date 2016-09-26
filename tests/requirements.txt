@@ -1,0 +1,4 @@
+xmltodict
+nose
+coverage
+mock

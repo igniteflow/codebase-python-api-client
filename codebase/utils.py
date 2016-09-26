@@ -31,13 +31,19 @@ class CodeBaseAPIUtils(CodeBaseAPI):
                 new_status_id = status['ticketing_status']['id']
 
         # exit if the ticket status was not found
-        if target_status_name is None:
-            logger.info('Status {} not found in project statuses.  Options are: {}'.format(
-                [status['ticketing_status']['name'] for status in statuses]
-            ))
+        if new_status_id is None:
+            status_names = ', '.join([
+                status['ticketing_status']['name'] for status in statuses
+            ])
+            logger.info(
+                u'Status "{}" not found in project statuses. '
+                u'Options are: {}'.format(target_status_name, status_names)
+            )
+            return
 
         # update the tickets
-        items = self.search('status:{}'.format(current_status_name))
+        items = self.search_all(status=current_status_name)
+        updated = []
         for item in items:
             ticket_id = item['ticket']['ticket_id']
             data = {
@@ -56,3 +62,6 @@ class CodeBaseAPIUtils(CodeBaseAPI):
                 current_status_name,
                 target_status_name
             ))
+            updated.append(ticket_id)
+
+        return updated
