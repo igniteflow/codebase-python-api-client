@@ -16,12 +16,18 @@ if __name__ == "__main__":
     1. project name
     2. api function name
     3. args to pass to the api function
+
+    Search:
+
+    codebase my_project search "status:code complete"
     """
     if len(sys.argv) == 1:
         # if no args then print available API methods
+        print 'Available commands:\n'
         for name in dir(CodeBaseAPI):
             if name[0] != '_' and name[0].islower():
-                print name
+                print '\t' + name
+        print
     else:
         # make the API call
         # TODO use something more sensible like argparse
@@ -38,5 +44,13 @@ if __name__ == "__main__":
             project=project,
         )
 
-        response = getattr(codebase, command)(*args)
-        pprint.pprint(response)
+        kwargs = {}
+        if args and command == 'search' and ':' in args[0]:
+            k, v = args[0].split(':')
+            kwargs[k] = v
+            response = getattr(codebase, command)(**kwargs)
+            for ticket in response:
+                print '{ticket_id} {summary}'.format(**ticket['ticket'])
+        else:
+            response = getattr(codebase, command)(*args, **kwargs)
+            pprint.pprint(response)
