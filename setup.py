@@ -12,6 +12,7 @@ setup(
     packages=['codebase'],
     install_requires=[
         'xmltodict>=0.9.2',
+        'terminaltables>=3.1.0',
     ],
     license='MIT',
     scripts=[

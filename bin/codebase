@@ -3,7 +3,21 @@
 import pprint
 import sys
 
+from terminaltables import AsciiTable
+
 from codebase.client import CodeBaseAPI
+
+
+def get_search_table_data(response):
+    table_headers = [
+        '#',
+        'Summary',
+    ]
+
+    return [table_headers] + [
+        [ticket['ticket']['ticket_id'], ticket['ticket']['summary']]
+        for ticket in response
+    ]
 
 
 if __name__ == "__main__":
@@ -49,8 +63,9 @@ if __name__ == "__main__":
             k, v = args[0].split(':')
             kwargs[k] = v
             response = getattr(codebase, command)(**kwargs)
-            for ticket in response:
-                print '{ticket_id} {summary}'.format(**ticket['ticket'])
+            table_data = get_search_table_data(response)
+            table = AsciiTable(table_data)
+            print table.table
         else:
             response = getattr(codebase, command)(*args, **kwargs)
             pprint.pprint(response)
