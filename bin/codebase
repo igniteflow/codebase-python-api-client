@@ -1,71 +1,81 @@
 #!/usr/bin/env python
-
+import argparse
+import logging
 import pprint
-import sys
 
 from terminaltables import AsciiTable
 
 from codebase.client import CodeBaseAPI
+
+logger = logging.getLogger(__name__)
+
+"""
+Simple command-line interface to the Codebase API.  Example usages:
+
+    codebase myproject all_notes 6
+    codebase myproject search "status:new"
+
+Arguments:
+1. project name
+2. api function name
+3. args to pass to the api function
+
+Search:
+
+codebase my_project search "status:code complete"
+"""
 
 
 def get_search_table_data(response):
     table_headers = [
         '#',
         'Summary',
+        'Assignee',
     ]
 
     return [table_headers] + [
-        [ticket['ticket']['ticket_id'], ticket['ticket']['summary']]
+        [ticket['ticket']['ticket_id'], ticket['ticket']['summary'], ticket['ticket']['assignee']]
         for ticket in response
     ]
 
 
-if __name__ == "__main__":
-    """
-    Simple command-line interface to the Codebase API.  Example usage:
+def available_commands():
+    return [
+        name
+        for name in dir(CodeBaseAPI)
+        if name[0] != '_' and name[0].islower()
+    ]
 
-        codebase myproject all_notes 6
 
-    Arguments:
-    1. project name
-    2. api function name
-    3. args to pass to the api function
+def main():
+    parser = argparse.ArgumentParser(description='Codebase command-line interface')
+    parser.add_argument('project', help='Codebase project name')
+    parser.add_argument('command', choices=available_commands(), help='A Codebase API command')
+    parser.add_argument('search_term', type=str, help='A Codebase API command')
+    args = parser.parse_args()
 
-    Search:
+    project = args.project
+    command = args.command
+    search_term = args.search_term
 
-    codebase my_project search "status:code complete"
-    """
-    if len(sys.argv) == 1:
-        # if no args then print available API methods
-        print 'Available commands:\n'
-        for name in dir(CodeBaseAPI):
-            if name[0] != '_' and name[0].islower():
-                print '\t' + name
-        print
-    else:
-        # make the API call
-        # TODO use something more sensible like argparse
-        if not len(sys.argv) >= 3:
-            print('Usage:  codebase [project name] [api method]\n e.g. codebase myproject statuses')
-            exit(1)
+    codebase = CodeBaseAPI(project=project)
 
-        # TODO if only one arg given, then assume its a global command e.g. 'projects'
-        project = sys.argv[1]
-        command = sys.argv[2]
-        args = sys.argv[3:]
-
-        codebase = CodeBaseAPI(
-            project=project,
-        )
-
-        kwargs = {}
-        if args and command == 'search' and ':' in args[0]:
-            k, v = args[0].split(':')
-            kwargs[k] = v
-            response = getattr(codebase, command)(**kwargs)
+    try:
+        if command == 'search' and ':' in search_term:
+            k, v = search_term.split(':')
+            response = getattr(codebase, command)(**{k: v})
             table_data = get_search_table_data(response)
             table = AsciiTable(table_data)
             print table.table
         else:
-            response = getattr(codebase, command)(*args, **kwargs)
+            response = getattr(codebase, command)()
             pprint.pprint(response)
+    except Exception as e:
+        logger.error(e)
+        print('Error for [project] {} [command] {} [args] {}'.format(
+            project, command, args
+        ))
+
+
+if __name__ == "__main__":
+    main()
